@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpotTube — Recomendação Vetorial</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <strong>SpotTube</strong>
+            <span>Vector Recommender</span>
+        </div>
+        <span class="math-tag">R¹⁰</span>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <span class="eyebrow">CÁLCULO E ÁLGEBRA LINEAR</span>
+            <h1>Seu gosto musical,<br><span>modelado por vetores.</span></h1>
+            <p>O SpotTube aprende suas preferências usando similaridade de cosseno, gradiente descendente, momentum e exploração.</p>
+            <div id="status" class="status"></div>
+        </section>
+
+        <section id="cold-start" class="panel">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">ETAPA 01</span>
+                    <h2>Cold Start</h2>
+                    <p>Avalie uma música de cada eixo para formar seu vetor inicial.</p>
+                </div>
+                <button id="finish-cold-start" class="primary" disabled>Gerar meu perfil</button>
+            </div>
+            <div id="cold-start-list" class="rating-list"></div>
+        </section>
+
+        <section id="recommendations" class="panel hidden">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">ETAPA 02</span>
+                    <h2>Seu feed</h2>
+                    <p>9 recomendações por similaridade + 1 exploração.</p>
+                </div>
+            </div>
+            <div id="feed-list" class="feed-list"></div>
+        </section>
+
+        <section id="hud" class="panel hidden">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">HUD MATEMÁTICO</span>
+                    <h2>O que o modelo está fazendo?</h2>
+                </div>
+            </div>
+
+            <div class="hud-grid">
+                <div class="metric"><span>‖Vᵤ‖₂</span><strong id="hud-norm">0</strong></div>
+                <div class="metric"><span>Magnitude ∇E</span><strong id="hud-gradient">0</strong></div>
+                <div class="metric"><span>Previsão r̂</span><strong id="hud-prediction">0</strong></div>
+                <div class="metric"><span>Última nota</span><strong id="hud-rating">—</strong></div>
+                <div class="metric"><span>Erro</span><strong id="hud-error">0</strong></div>
+                <div class="metric"><span>α</span><strong id="hud-alpha">0.1</strong></div>
+                <div class="metric"><span>Momentum</span><strong id="hud-momentum">0.8</strong></div>
+                <div class="metric"><span>Exploração</span><strong id="hud-exploration">—</strong></div>
+            </div>
+
+            <div class="vector-box">
+                <h3>Vetor de preferência Vᵤ</h3>
+                <div id="hud-vector"></div>
+            </div>
+        </section>
+    </main>
+
+    <div id="rating-modal" class="modal hidden">
+        <div class="modal-card">
+            <button id="modal-close" class="modal-close">×</button>
+            <span class="eyebrow">FEEDBACK</span>
+            <h2 id="modal-song-title">Música</h2>
+            <p id="modal-song-artist">Artista</p>
+            <input id="modal-song-id" type="hidden">
+            <label for="modal-rating">Sua nota</label>
+            <select id="modal-rating">
+                <option value="1">1 estrela</option>
+                <option value="2">2 estrelas</option>
+                <option value="3">3 estrelas</option>
+                <option value="4">4 estrelas</option>
+                <option value="5" selected>5 estrelas</option>
+            </select>
+            <button id="modal-submit" class="primary">Atualizar meu perfil</button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/catalogo.js"></script>
+    <script src="js/matematica.js"></script>
+    <script src="js/perfil.js"></script>
+    <script src="js/recomendacao.js"></script>
+    <script src="js/exploracao.js"></script>
+    <script src="js/estado.js"></script>
+    <script src="js/interface.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

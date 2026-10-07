@@ -17,6 +17,9 @@ function calcularPerfilInicial(avaliacoes) {
 }
 
 function registrarAvaliacao(estado, musica, nota) {
+    // Proteção: cada música só pode ser avaliada uma vez (retorna null se já foi).
+    if (estado.musicasAvaliadas.has(musica.id)) return null;
+
     const notaNormalizada = normalizarNota(nota);
     const previsao = preverNota(estado.perfil, musica.vetor);
     const erro = calcularErro(notaNormalizada, previsao);
@@ -29,6 +32,7 @@ function registrarAvaliacao(estado, musica, nota) {
         estado.velocidade
     );
 
+    const perfilAnterior = [...estado.perfil];
     estado.perfil = resultadoAtualizacao.perfil;
     estado.velocidade = resultadoAtualizacao.velocidade;
     estado.avaliacoes.push({
@@ -47,7 +51,9 @@ function registrarAvaliacao(estado, musica, nota) {
         previsao,
         erro,
         gradiente,
-        magnitudeGradiente
+        magnitudeGradiente,
+        perfilAnterior,
+        perfilNovo: [...estado.perfil]
     };
 
     return estado.ultimaAvaliacao;

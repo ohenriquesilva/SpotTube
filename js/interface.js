@@ -46,7 +46,7 @@ function renderFeed(feed) {
 function renderHUD(estado) {
     const perfil = estado.perfil;
     const ultima = estado.ultimaAvaliacao;
-    const alvo = estado.exploracao?.alvo;
+    const generos = (estado.exploracao || []).map(e => e.alvo.genero).join(" · ");
 
     const setText = (id, value) => {
         const el = document.querySelector(`#${id}`);
@@ -60,23 +60,47 @@ function renderHUD(estado) {
     setText("hud-error", formatarNumero(ultima?.erro || 0));
     setText("hud-alpha", ALPHA);
     setText("hud-momentum", MOMENTUM);
-    setText("hud-exploration", alvo?.genero || "—");
+    setText("hud-exploration", generos || "—");
 
     const vector = document.querySelector("#hud-vector");
     if (vector) {
+        const maximo = Math.max(...perfil, 1e-9);
         vector.innerHTML = perfil.map((valor, i) => `
             <div class="vector-row">
                 <span>${GENEROS[i]}</span>
+                <div class="bar"><i style="width:${(valor / maximo * 100).toFixed(1)}%"></i></div>
                 <strong>${formatarNumero(valor)}</strong>
             </div>
         `).join("");
     }
 }
 
+// Telas: "home" (apresentação) e "app" (HUD + músicas + dashboard).
+function mostrarTela(tela) {
+    document.querySelector("#view-home")?.classList.toggle("hidden", tela !== "home");
+    document.querySelector("#view-app")?.classList.toggle("hidden", tela !== "app");
+    window.scrollTo(0, 0);
+}
+
+// Abas da tela do app: "musicas" (Cold Start ou feed, conforme a etapa) e "dashboard".
+function mostrarAba(aba) {
+    const dash = aba === "dashboard";
+    const cold = estadoUsuario.etapa === "cold-start";
+    document.querySelector("#cold-start")?.classList.toggle("hidden", dash || !cold);
+    document.querySelector("#recommendations")?.classList.toggle("hidden", dash || cold);
+    document.querySelector("#dashboard")?.classList.toggle("hidden", !dash);
+    document.querySelector("#tab-musicas")?.classList.toggle("active", !dash);
+    document.querySelector("#tab-dashboard")?.classList.toggle("active", dash);
+}
+
 function mostrarFeed() {
-    document.querySelector("#cold-start")?.classList.add("hidden");
-    document.querySelector("#recommendations")?.classList.remove("hidden");
-    document.querySelector("#hud")?.classList.remove("hidden");
+    document.querySelector("#tab-dashboard").disabled = false;
+    mostrarAba("musicas");
+}
+
+function mostrarColdStart() {
+    document.querySelector("#tab-dashboard").disabled = true;
+    mostrarAba("musicas");
 }
 
 function mostrarStatus(mensagem) {

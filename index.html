@@ -7,87 +7,147 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header class="topbar">
+    <!-- TELA 1: apresentação -->
+    <section id="view-home" class="home">
         <div>
-            <strong>SpotTube</strong>
-            <span>Vector Recommender</span>
+            <span class="eyebrow">CÁLCULO E ÁLGEBRA LINEAR · R¹⁰</span>
+            <h1 class="home-title">SpotTube</h1>
+            <p class="home-phrase">Seu gosto musical, <span>modelado por vetores.</span></p>
+            <div class="home-actions">
+                <button id="btn-start" class="primary big">Iniciar</button>
+                <button id="btn-reset" class="secondary">Resetar</button>
+            </div>
         </div>
-        <span class="math-tag">R¹⁰</span>
-    </header>
+    </section>
 
-    <main class="container">
-        <section class="hero">
-            <span class="eyebrow">CÁLCULO E ÁLGEBRA LINEAR</span>
-            <h1>Seu gosto musical,<br><span>modelado por vetores.</span></h1>
-            <p>O SpotTube aprende suas preferências usando similaridade de cosseno, gradiente descendente, momentum e exploração.</p>
-            <div id="status" class="status"></div>
-        </section>
+    <!-- TELA 2: aplicação -->
+    <div id="view-app" class="hidden">
+        <header class="topbar">
+            <button id="btn-back" class="back">← Voltar</button>
+            <div><strong>SpotTube</strong><span>Vector Recommender</span></div>
+            <span class="math-tag">R¹⁰</span>
+        </header>
 
-        <section id="cold-start" class="panel">
-            <div class="section-heading">
-                <div>
-                    <span class="eyebrow">ETAPA 01</span>
-                    <h2>Cold Start</h2>
-                    <p>Avalie uma música de cada eixo para formar seu vetor inicial.</p>
+        <main class="container">
+            <section id="intro" class="panel intro">
+                <span class="eyebrow">COMO FUNCIONA</span>
+                <h2>Seu gosto vira um vetor de 10 números</h2>
+                <ol>
+                    <li><b>Cada música</b> é um vetor com 10 números (um por gênero). <b>Você</b> também tem um: o vetor Vᵤ.</li>
+                    <li><b>Avalie as 10 músicas</b> abaixo (uma por gênero) para formar seu vetor inicial.</li>
+                    <li>O sistema compara seu vetor com todas as músicas pelo <b>cosseno</b> (quanto mais alinhados, mais parecidos).</li>
+                    <li>O feed traz <b>8 músicas por similaridade + 2 de exploração</b> de gêneros pouco presentes no seu perfil.</li>
+                    <li>Cada nota que você dá gera um <b>erro</b>; o <b>gradiente</b> (com <b>momentum</b>) corrige seu vetor.</li>
+                </ol>
+                <div id="status" class="status"></div>
+            </section>
+
+            <section id="hud" class="panel">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">HUD MATEMÁTICO</span>
+                        <h2>O que o modelo está fazendo?</h2>
+                    </div>
                 </div>
-                <button id="finish-cold-start" class="primary" disabled>Gerar meu perfil</button>
-            </div>
-            <div id="cold-start-list" class="rating-list"></div>
-        </section>
-
-        <section id="recommendations" class="panel hidden">
-            <div class="section-heading">
-                <div>
-                    <span class="eyebrow">ETAPA 02</span>
-                    <h2>Seu feed</h2>
-                    <p>9 recomendações por similaridade + 1 exploração.</p>
+                <div class="hud-grid">
+                    <div class="metric"><span>‖Vᵤ‖₂</span><strong id="hud-norm">0</strong></div>
+                    <div class="metric"><span>Magnitude ∇E</span><strong id="hud-gradient">0</strong></div>
+                    <div class="metric"><span>Previsão r̂</span><strong id="hud-prediction">0</strong></div>
+                    <div class="metric"><span>Última nota</span><strong id="hud-rating">—</strong></div>
+                    <div class="metric"><span>Erro</span><strong id="hud-error">0</strong></div>
+                    <div class="metric"><span>α</span><strong id="hud-alpha">0.1</strong></div>
+                    <div class="metric"><span>Momentum</span><strong id="hud-momentum">0.8</strong></div>
+                    <div class="metric"><span>Exploração</span><strong id="hud-exploration" class="small">—</strong></div>
                 </div>
-            </div>
-            <div id="feed-list" class="feed-list"></div>
-        </section>
-
-        <section id="hud" class="panel hidden">
-            <div class="section-heading">
-                <div>
-                    <span class="eyebrow">HUD MATEMÁTICO</span>
-                    <h2>O que o modelo está fazendo?</h2>
+                <div class="vector-box">
+                    <h3>Vetor de preferência Vᵤ</h3>
+                    <div id="hud-vector" class="vector-grid"></div>
                 </div>
-            </div>
+            </section>
 
-            <div class="hud-grid">
-                <div class="metric"><span>‖Vᵤ‖₂</span><strong id="hud-norm">0</strong></div>
-                <div class="metric"><span>Magnitude ∇E</span><strong id="hud-gradient">0</strong></div>
-                <div class="metric"><span>Previsão r̂</span><strong id="hud-prediction">0</strong></div>
-                <div class="metric"><span>Última nota</span><strong id="hud-rating">—</strong></div>
-                <div class="metric"><span>Erro</span><strong id="hud-error">0</strong></div>
-                <div class="metric"><span>α</span><strong id="hud-alpha">0.1</strong></div>
-                <div class="metric"><span>Momentum</span><strong id="hud-momentum">0.8</strong></div>
-                <div class="metric"><span>Exploração</span><strong id="hud-exploration">—</strong></div>
-            </div>
+            <nav class="tabs">
+                <button id="tab-musicas" class="active">Músicas</button>
+                <button id="tab-dashboard" disabled>Dashboard</button>
+            </nav>
 
-            <div class="vector-box">
-                <h3>Vetor de preferência Vᵤ</h3>
-                <div id="hud-vector"></div>
-            </div>
-        </section>
-    </main>
+            <section id="cold-start" class="panel">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">ETAPA 01</span>
+                        <h2>Cold Start</h2>
+                        <p>Avalie uma música de cada eixo para formar seu vetor inicial.</p>
+                    </div>
+                    <button id="finish-cold-start" class="primary" disabled>Gerar meu perfil</button>
+                </div>
+                <div id="cold-start-list" class="rating-list"></div>
+            </section>
 
-    <div id="rating-modal" class="modal hidden">
-        <div class="modal-card">
-            <button id="modal-close" class="modal-close">×</button>
-            <span class="eyebrow">FEEDBACK</span>
-            <h2 id="modal-song-title">Música</h2>
-            <p id="modal-song-artist">Artista</p>
-            <input id="modal-song-id" type="hidden">
-            <label for="modal-rating">Sua nota</label>
-            <select id="modal-rating">
-                <option value="1">1 estrela</option>
-                <option value="2">2 estrelas</option>
-                <option value="3">3 estrelas</option>
-                <option value="4">4 estrelas</option>
-                <option value="5" selected>5 estrelas</option>
-            </select>
-            <button id="modal-submit" class="primary">Atualizar meu perfil</button>
+            <section id="recommendations" class="panel hidden">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">ETAPA 02</span>
+                        <h2>Seu feed</h2>
+                        <p>8 recomendações por similaridade + 2 explorações (gêneros diferentes).</p>
+                    </div>
+                </div>
+                <div id="feed-list" class="feed-list"></div>
+            </section>
+
+            <section id="dashboard" class="panel hidden">
+                <span class="eyebrow">DASHBOARD · ÁLGEBRA LINEAR VISÍVEL</span>
+                <h2>Seus dados, em gráficos</h2>
+
+                <h3>1. Vetor Vᵤ nos 10 eixos</h3>
+                <p>Cada barra é uma componente de Vᵤ (vem do <b>seu comportamento</b>: suas notas). A marca branca é o valor <b>antes</b> da última avaliação; as barras laranja são os eixos usados na exploração.</p>
+                <div id="dash-bars"></div>
+
+                <h3>2. Música em análise</h3>
+                <p>Escolha qualquer uma das 100 músicas. O vetor da música (V_f) são <b>pesos fixos do catálogo</b>: não mudam com suas notas. Escolher uma música <b>não altera</b> Vᵤ; só uma avaliação altera.</p>
+                <div class="controls">
+                    <label>Música (100) <select id="dash-song"></select></label>
+                    <button id="dash-rate" class="primary">Avaliar esta música</button>
+                </div>
+                <div class="controls">
+                    <label class="check"><input type="checkbox" id="dash-auto" checked> Eixos automáticos (os 2 que mais contribuem)</label>
+                    <label>Eixo X <select id="dash-x"></select></label>
+                    <label>Eixo Y <select id="dash-y"></select></label>
+                </div>
+                <div class="plane-wrap">
+                    <div id="dash-plane"></div>
+                    <div>
+                        <div id="dash-info" class="dash-info"></div>
+                        <ul class="legend">
+                            <li><i style="background:var(--accent)"></i> Vᵤ (seu perfil)</li>
+                            <li><i style="background:#6cb6ff"></i> V_f (música em análise)</li>
+                            <li><i style="background:#ffb454"></i> Efeito da última avaliação: Vᵤ antes → depois</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>3. De onde vem o cosseno?</h3>
+                <p>O produto escalar é uma <b>soma de 10 parcelas</b>: Vᵤ·V_f = Σ uᵢ·fᵢ. Cada barra é uma parcela. Os eixos do plano acima são os destacados.</p>
+                <div id="dash-contrib" class="vector-grid one"></div>
+                <div id="dash-contrib-sum" class="dash-info"></div>
+            </section>
+        </main>
+
+        <div id="rating-modal" class="modal hidden">
+            <div class="modal-card">
+                <button id="modal-close" class="modal-close">×</button>
+                <span class="eyebrow">FEEDBACK</span>
+                <h2 id="modal-song-title">Música</h2>
+                <p id="modal-song-artist">Artista</p>
+                <input id="modal-song-id" type="hidden">
+                <label for="modal-rating">Sua nota</label>
+                <select id="modal-rating">
+                    <option value="1">1 estrela</option>
+                    <option value="2">2 estrelas</option>
+                    <option value="3">3 estrelas</option>
+                    <option value="4">4 estrelas</option>
+                    <option value="5" selected>5 estrelas</option>
+                </select>
+                <button id="modal-submit" class="primary">Atualizar meu perfil</button>
+            </div>
         </div>
     </div>
 
@@ -99,6 +159,7 @@
     <script src="js/exploracao.js"></script>
     <script src="js/estado.js"></script>
     <script src="js/interface.js"></script>
+    <script src="js/dashboard.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

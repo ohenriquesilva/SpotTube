@@ -11,7 +11,10 @@ function buscarMusica(id) {
 function iniciarAplicacao() {
     validarCatalogo();
     renderColdStart();
+    renderHUD(estadoUsuario);      // HUD zerado antes do Cold Start
+    configurarDashboard();
     configurarEventos();
+    mostrarTela("home");
     mostrarStatus(`Avalie as ${TOTAL_COLD_START} músicas iniciais para criar seu perfil.`);
 }
 
@@ -70,6 +73,7 @@ function atualizarRecomendacoes() {
 
     renderFeed(estadoUsuario.feed);
     renderHUD(estadoUsuario);
+    renderDashboard(estadoUsuario);
 }
 
 function processarAvaliacao(musicaId, nota) {
@@ -77,6 +81,10 @@ function processarAvaliacao(musicaId, nota) {
     if (!musica) return;
 
     const resultado = registrarAvaliacao(estadoUsuario, musica, nota);
+    if (!resultado) {
+        mostrarStatus(`"${musica.titulo}" já foi avaliada. Cada música só pode ser avaliada uma vez.`);
+        return;
+    }
     estadoUsuario.etapa = "recommendation";
 
     atualizarRecomendacoes();
@@ -86,6 +94,27 @@ function processarAvaliacao(musicaId, nota) {
         `Nota normalizada: ${formatarNumero(resultado.notaNormalizada)} | ` +
         `Erro: ${formatarNumero(resultado.erro)}`
     );
+}
+
+// ---------- Navegação e reset ----------
+
+function temProgresso() {
+    return avaliacoesColdStart.size > 0 || estadoUsuario.etapa !== "cold-start";
+}
+
+// Zera vetor, velocidade, avaliações e feed: volta ao estado de "primeira vez".
+function resetarTudo() {
+    if (temProgresso() && !confirm("Zerar seu vetor e todas as avaliações?")) return;
+
+    Object.assign(estadoUsuario, criarEstadoInicial());
+    avaliacoesColdStart.clear();
+    renderColdStart();
+    document.querySelector("#finish-cold-start").disabled = true;
+    renderHUD(estadoUsuario);
+    document.querySelector("#feed-list").innerHTML = "";
+    mostrarColdStart();
+    fecharModal();
+    mostrarStatus(`Tudo zerado. Avalie as ${TOTAL_COLD_START} músicas iniciais para criar seu perfil.`);
 }
 
 // ---------- Eventos ----------
@@ -149,12 +178,22 @@ function configurarEventos() {
         if (avaliacoesColdStart.size === TOTAL_COLD_START) finalizarColdStart();
     });
 
+    document.querySelector("#btn-start")?.addEventListener("click", () => mostrarTela("app"));
+    document.querySelector("#btn-back")?.addEventListener("click", () => mostrarTela("home"));
+    document.querySelector("#btn-reset")?.addEventListener("click", resetarTudo);
+    document.querySelector("#tab-musicas")?.addEventListener("click", () => mostrarAba("musicas"));
+    document.querySelector("#tab-dashboard")?.addEventListener("click", () => mostrarAba("dashboard"));
+
     configurarModal();
 }
 
 function abrirModalAvaliacao(musicaId) {
     const musica = buscarMusica(musicaId);
     if (!musica) return;
+    if (estadoUsuario.musicasAvaliadas.has(musica.id)) {
+        mostrarStatus(`"${musica.titulo}" já foi avaliada.`);
+        return;
+    }
 
     document.querySelector("#modal-song-id").value = musica.id;
     document.querySelector("#modal-song-title").textContent = musica.titulo;

@@ -21,7 +21,7 @@ Teste do motor (opcional, requer Node.js): `node tests/regressao.js`
 ```
 Cold Start (10 avaliações) → perfil inicial Vᵤ⁰
       ↓
-ranking por cosseno → 9 recomendações  +  1 exploração  =  feed (10 músicas)
+ranking por cosseno → 8 recomendações  +  2 explorações  =  feed (10 músicas)
       ↓
 usuário avalia uma música → erro → gradiente → momentum → novo Vᵤ
       ↓
@@ -40,16 +40,17 @@ SpotTube/
 │   ├── catalogo.js      100 músicas, vetores normalizados e validação
 │   ├── matematica.js    norma, produto escalar, cosseno, erro, gradiente, momentum
 │   ├── perfil.js        perfil inicial e registro de avaliações
-│   ├── recomendacao.js  ranking e top-9
+│   ├── recomendacao.js  ranking e top-8
 │   ├── exploracao.js    menor eixo, música de exploração e montagem do feed
 │   ├── estado.js        estado único da sessão
-│   ├── interface.js     renderização (Cold Start, feed, HUD, status)
+│   ├── interface.js     renderização (Cold Start, feed, HUD, telas, abas)
+│   ├── dashboard.js     gráficos SVG: barras de Vᵤ e plano X × Y
 │   └── app.js           orquestração e eventos
 └── tests/regressao.js   teste do motor (extra, fora da estrutura oficial)
 ```
 
 Ordem de carregamento (importa, pois os arquivos usam variáveis globais):
-`config → catalogo → matematica → perfil → recomendacao → exploracao → estado → interface → app`
+`config → catalogo → matematica → perfil → recomendacao → exploracao → estado → interface → dashboard → app`
 
 ## 5. Vetores e eixos
 
@@ -93,7 +94,7 @@ Produto escalar e cosseno:
 
 $$a\cdot b=\sum_i a_i b_i \qquad \cos\theta=\frac{A\cdot B}{\|A\|\,\|B\|}$$
 
-O ranking exclui as músicas já avaliadas, calcula o cosseno entre `Vᵤ` e cada música e ordena da maior para a menor similaridade (desempate pelo menor ID). As 9 primeiras formam as recomendações.
+O ranking exclui as músicas já avaliadas, calcula o cosseno entre `Vᵤ` e cada música e ordena da maior para a menor similaridade (desempate pelo menor ID). As 8 primeiras formam as recomendações.
 
 ## 9. Previsão, erro e gradiente
 
@@ -117,17 +118,17 @@ $$v_{t+1}=\beta\,v_t+\nabla E \qquad V_u^{t+1}=\max\bigl(0,\;V_u^t-\alpha\,v_{t+
 
 ## 11. Exploração (anti-bolha)
 
-A exploração **não é aleatória**:
+A exploração **não é aleatória**. São **2 músicas de gêneros diferentes**:
 
-1. identifica o eixo de **menor componente** em `Vᵤ`;
-2. pega as músicas desse gênero ainda não avaliadas;
+1. ordena os eixos de `Vᵤ` do **menor para o maior componente** e pega os dois menores;
+2. em cada um, considera as músicas do gênero ainda não avaliadas e fora do top 8;
 3. escolhe a de **maior similaridade** com o perfil atual.
 
-Assim o sistema empurra o usuário para um gênero pouco representado, mas ainda respeitando a proximidade matemática dentro dele (diversificação controlada). Se a escolhida já estiver no top 9, usa-se a melhor do mesmo gênero fora do top 9.
+Assim o sistema empurra o usuário para um gênero pouco representado, mas ainda respeitando a proximidade matemática dentro dele (diversificação controlada). Se um gênero não tiver mais músicas disponíveis, passa-se ao próximo eixo menos representado.
 
 ## 12. Feed
 
-`9 recomendações por ranking + 1 exploração = 10 músicas`. A música de exploração aparece destacada com o selo **EXPLORAÇÃO**.
+`8 recomendações por ranking + 2 explorações = 10 músicas` (exibidas em 2 colunas de 5). As músicas de exploração aparecem com o selo **EXPLORAÇÃO**.
 
 ## 13. HUD matemático
 
@@ -142,7 +143,7 @@ Perfil inicial obtido:
 [0.1543, 0.2442, 0.1208, 0.0383, 0.0830, 0.0332, 0.0736, 0.0958, 0.0686, 0.1378]
 ```
 
-O menor eixo é **Samba (0.0332)**, então a exploração vem de Samba. Valores gerados pelo código para esse cenário:
+Os dois menores eixos são **Samba (0.0332)** e **Clássica (0.0383)**, então as explorações vêm desses gêneros. Feed gerado pelo código nesse cenário (8 por ranking + 2 por exploração):
 
 | # | Música | Gênero | Similaridade |
 |---|---|---|---|
@@ -154,8 +155,8 @@ O menor eixo é **Samba (0.0332)**, então a exploração vem de Samba. Valores 
 | 6 | Another One Bites the Dust | Rock | 0.6990 |
 | 7 | Fly Me to the Moon | Jazz | 0.6713 |
 | 8 | ...Baby One More Time | Pop | 0.6642 |
-| 9 | Toxic | Pop | 0.6642 |
-| 10 | O Que É, O Que É? (exploração) | Samba | 0.6228 |
+| 9 | O Que É, O Que É? (exploração) | Samba | 0.6228 |
+| 10 | Ride of the Valkyries (exploração) | Clássica | 0.2939 |
 
 `node tests/regressao.js` valida esse cenário e as invariantes do motor (catálogo, notas, feed, momentum).
 
@@ -169,5 +170,10 @@ Camadas: **dados** (`config`, `catalogo`) → **matemática** (`matematica`) →
 - `α = 0.1` e `β = 0.8` (valores definidos pelo grupo).
 - Vetores do catálogo normalizados; vetor do usuário **não** normalizado.
 - Cold Start com *Take Five* (ID 22) no Jazz.
-- Exploração dirigida ao menor eixo, não aleatória.
+- Exploração dirigida aos 2 eixos menos representados (gêneros diferentes), não aleatória.
+- Feed: 8 por ranking + 2 por exploração (antes eram 9 + 1), em 2 colunas de 5.
+- Telas: apresentação (Iniciar/Resetar) → app (explicação, HUD, abas Músicas/Dashboard); botão Voltar.
+- O Dashboard só lê o estado (não altera cálculos): barras de Vᵤ, plano X × Y com projeções (o cosseno real usa os 10 eixos) e a decomposição do produto escalar em 10 parcelas (uᵢ·fᵢ).
+- No Dashboard dá para analisar **qualquer das 100 músicas**. Vᵤ vem do comportamento do usuário (muda com as notas); V_f são pesos fixos do catálogo. Escolher uma música **não altera** Vᵤ. Os eixos do plano são automáticos (os 2 de maior parcela uᵢ·fᵢ), com opção manual.
+- Cada música só pode ser avaliada **uma vez**: o botão mostra "Música já avaliada" e o motor (`registrarAvaliacao`) recusa reavaliações.
 - JavaScript puro, sem frameworks; sem armazenamento persistente (o estado vive na sessão).

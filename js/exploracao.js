@@ -1,73 +1,47 @@
 // js/exploracao.js
-// Estratégia anti-bolha: procura a dimensão menos representada
-// e escolhe, dentro dela, a música mais compatível com o perfil atual.
+// Estratégia anti-bolha: usa os eixos MENOS representados no perfil e, em cada um,
+// escolhe a música mais compatível (maior cosseno) ainda não avaliada.
+// São TOTAL_EXPLORACAO (2) músicas, sempre de gêneros diferentes.
 
-function identificarDimensaoMenosRepresentada(perfil) {
-    let indiceMenor = 0;
-
-    for (let i = 1; i < perfil.length; i++) {
-        if (perfil[i] < perfil[indiceMenor]) {
-            indiceMenor = i;
-        }
-    }
-
-    return {
-        indice: indiceMenor,
-        genero: GENEROS[indiceMenor],
-        valor: perfil[indiceMenor]
-    };
+function ordenarEixosPorRepresentacao(perfil) {
+    return perfil
+        .map((valor, indice) => ({ indice, genero: GENEROS[indice], valor }))
+        .sort((a, b) => a.valor - b.valor || a.indice - b.indice);
 }
 
-function selecionarMusicaExploracao(perfil, catalogo, idsAvaliados) {
-    const alvo = identificarDimensaoMenosRepresentada(perfil);
+function identificarDimensaoMenosRepresentada(perfil) {
+    return ordenarEixosPorRepresentacao(perfil)[0];
+}
 
-    const candidatos = catalogo
-        .filter(musica =>
-            musica.genero === alvo.genero &&
-            !idsAvaliados.has(musica.id)
-        )
-        .map(musica => ({
-            ...musica,
-            similaridade: similaridadeCosseno(perfil, musica.vetor)
-        }))
-        .sort((a, b) => {
-            if (b.similaridade !== a.similaridade) {
-                return b.similaridade - a.similaridade;
-            }
-            return a.id - b.id;
-        });
+// Retorna [{ alvo: {indice, genero, valor}, musica }, ...] com gêneros distintos.
+// idsExcluidos evita repetir músicas que já estão nas recomendações por ranking.
+function selecionarMusicasExploracao(perfil, catalogo, idsAvaliados, idsExcluidos = new Set(), quantidade = TOTAL_EXPLORACAO) {
+    const resultado = [];
 
-    return {
-        alvo,
-        musica: candidatos[0] || null
-    };
+    for (const alvo of ordenarEixosPorRepresentacao(perfil)) {
+        if (resultado.length >= quantidade) break;
+
+        const melhor = catalogo
+            .filter(m => m.genero === alvo.genero && !idsAvaliados.has(m.id) && !idsExcluidos.has(m.id))
+            .map(m => ({ ...m, similaridade: similaridadeCosseno(perfil, m.vetor) }))
+            .sort((a, b) => b.similaridade - a.similaridade || a.id - b.id)[0];
+
+        if (melhor) resultado.push({ alvo, musica: melhor });
+    }
+    return resultado;
 }
 
 function gerarFeed(perfil, catalogo, idsAvaliados) {
     const ranking = calcularRanking(perfil, catalogo, idsAvaliados);
     const recomendacoes = selecionarTopRecomendacoes(ranking);
-    const exploracao = selecionarMusicaExploracao(perfil, catalogo, idsAvaliados);
-
-    const idsRecomendadas = new Set(recomendacoes.map(m => m.id));
-    let musicaExploracao = exploracao.musica;
-
-    // Garante que a exploração não duplique uma recomendação do TOP 9.
-    if (musicaExploracao && idsRecomendadas.has(musicaExploracao.id)) {
-        musicaExploracao = ranking.find(m =>
-            m.genero === exploracao.alvo.genero &&
-            !idsRecomendadas.has(m.id)
-        ) || null;
-    }
+    const exploracao = selecionarMusicasExploracao(
+        perfil, catalogo, idsAvaliados, new Set(recomendacoes.map(m => m.id))
+    );
 
     return {
         ranking,
         recomendacoes,
-        exploracao: {
-            ...exploracao,
-            musica: musicaExploracao
-        },
-        feed: musicaExploracao
-            ? [...recomendacoes, { ...musicaExploracao, exploracao: true }]
-            : recomendacoes
+        exploracao,
+        feed: [...recomendacoes, ...exploracao.map(e => ({ ...e.musica, exploracao: true }))]
     };
 }

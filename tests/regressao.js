@@ -54,12 +54,13 @@ checar("Menor eixo = Samba", A.identificarDimensaoMenosRepresentada(perfil).gene
 const avaliados = new Set(A.IDS_COLD_START);
 const f = A.gerarFeed(perfil, A.CATALOGO, avaliados);
 checar("Feed com 10 músicas", f.feed.length === 10);
-checar("9 por ranking + 1 exploração",
-    f.recomendacoes.length === 9 && f.feed.filter(m => m.exploracao).length === 1);
+checar("8 por ranking + 2 explorações",
+    f.recomendacoes.length === 8 && f.feed.filter(m => m.exploracao).length === 2);
 checar("Nenhuma música já avaliada no feed", f.feed.every(m => !avaliados.has(m.id)));
 checar("Sem duplicatas no feed", new Set(f.feed.map(m => m.id)).size === f.feed.length);
-checar("Exploração pertence ao eixo menos representado",
-    f.feed.find(m => m.exploracao).genero === "Samba");
+const expl = f.feed.filter(m => m.exploracao);
+checar("Explorações de gêneros diferentes: os 2 eixos menos representados (Samba e Clássica)",
+    expl.length === 2 && expl[0].genero === "Samba" && expl[1].genero === "Clássica");
 checar("Ranking ordenado por similaridade decrescente",
     f.ranking.every((m, i) => i === 0 || f.ranking[i - 1].similaridade >= m.similaridade));
 
@@ -84,6 +85,10 @@ checar("Momentum: v₂ = 0.8·v₁ + ∇E₂",
     estado.velocidade.every((v, i) => perto(v, A.MOMENTUM * vAnterior[i] + r2.gradiente[i], 1e-12)));
 checar("Música avaliada sai do ranking",
     !A.gerarFeed(estado.perfil, A.CATALOGO, estado.musicasAvaliadas).ranking.some(m => m.id === musica2.id));
+
+const perfilAntes = JSON.stringify(estado.perfil);
+checar("Música já avaliada não é registrada de novo (retorna null, perfil intacto)",
+    A.registrarAvaliacao(estado, musica2, 5) === null && JSON.stringify(estado.perfil) === perfilAntes);
 
 console.log(falhas === 0 ? "\nTodos os testes passaram." : `\n${falhas} teste(s) falharam.`);
 process.exit(falhas === 0 ? 0 : 1);

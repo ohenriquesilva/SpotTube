@@ -5,8 +5,8 @@
 const DIMENSOES = 10;          // dimensão do espaço de preferências (R¹⁰)
 const ALPHA = 0.1;             // taxa de aprendizado (α)
 const MOMENTUM = 0.8;          // coeficiente de inércia (β)
-const TOP_RECOMENDACOES = 9;   // músicas escolhidas por ranking
-const TOTAL_EXPLORACAO = 1;    // músicas escolhidas por exploração
+const TOP_RECOMENDACOES = 8;   // músicas escolhidas por ranking
+const TOTAL_EXPLORACAO = 2;    // músicas de exploração (gêneros diferentes)
 const ESCALA_NOTA = 5;         // a interface usa 1–5 estrelas
 
 // ORDEM FIXA dos eixos. Não alterar: todos os vetores dependem dela.
